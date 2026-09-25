@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#1E6B34">
+<meta name="robots" content="noindex, nofollow">
+<title>Controle de Demandas — Vila Verde</title>
+<link rel="icon" href="assets/arvore.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/tema.css">
+</head>
+<body>
+<a class="pular" href="#conteudo">Ir para o conteúdo</a>
+
+<header class="topo">
+  <div class="topo__faixa" aria-hidden="true"></div>
+  <div class="topo__corpo">
+    <img class="topo__logo" src="assets/arvore.svg" alt="" width="52" height="56">
+    <div class="topo__titulos">
+      <h1 id="titulo-local">Residencial Vila Verde</h1>
+      <p id="subtitulo-local">Diretoria da Vila · Controle de Demandas de PNR</p>
+    </div>
+    <div class="sinc" id="sinc" role="status" aria-live="polite"><span class="sinc__ponto"></span><span id="sinc-texto">Carregando…</span></div>
+  </div>
+</header>
+
+<main id="conteudo" class="pagina">
+  <div class="aviso" id="aviso-demo" hidden>
+    <strong>Modo demonstração.</strong> Os dados ficam só neste navegador e <u>não</u> são gravados na planilha. Configure <code>API_URL</code> em <code>js/config.js</code>.
+  </div>
+  <div class="aviso aviso--erro" id="aviso-erro" role="alert" hidden></div>
+
+  <section class="kpis" aria-label="Indicadores">
+    <article class="kpi"><h2>Demandas ativas</h2><p class="kpi__valor" id="kpi-ativas">–</p><p class="kpi__nota">não finalizadas</p></article>
+    <article class="kpi kpi--critico"><h2>Críticas (Nível 1)</h2><p class="kpi__valor" id="kpi-criticas">–</p><p class="kpi__nota">ativas e urgentes</p></article>
+    <article class="kpi kpi--ok"><h2>Concluídas no mês</h2><p class="kpi__valor" id="kpi-mes">–</p><p class="kpi__nota" id="kpi-mes-nome">mês corrente</p></article>
+    <article class="kpi"><h2>Tempo médio de resolução</h2><p class="kpi__valor" id="kpi-tempo">–</p><p class="kpi__nota">da abertura à conclusão</p></article>
+  </section>
+
+  <section class="barra" aria-label="Filtros e ações">
+    <div class="filtros">
+      <label class="campo campo--busca"><span>Buscar</span><input type="search" id="f-busca" placeholder="Protocolo, escopo, local…" autocomplete="off"></label>
+      <label class="campo"><span>Status</span><select id="f-status"></select></label>
+      <label class="campo"><span>Prioridade</span><select id="f-prioridade"></select></label>
+      <label class="campo"><span>Categoria</span><select id="f-categoria"></select></label>
+      <label class="campo"><span>Ordenar</span>
+        <select id="f-ordem">
+          <option value="prioridade">Prioridade</option>
+          <option value="recentes">Mais recentes</option>
+          <option value="antigas">Mais antigas</option>
+          <option value="atualizadas">Atualizadas há mais tempo</option>
+        </select></label>
+    </div>
+    <div class="acoes">
+      <div class="alterna" role="group" aria-label="Modo de visualização">
+        <button type="button" class="alterna__bt" id="v-tabela" aria-pressed="true">Tabela</button>
+        <button type="button" class="alterna__bt" id="v-kanban" aria-pressed="false">Quadro</button>
+      </div>
+      <button type="button" class="bt bt--sec" id="bt-pdf">Exportar PDF</button>
+      <button type="button" class="bt bt--sec" id="bt-csv">Exportar CSV</button>
+      <button type="button" class="bt bt--prim" id="bt-nova">+ Nova demanda</button>
+    </div>
+  </section>
+
+  <p class="contagem" id="contagem" aria-live="polite"></p>
+
+  <section id="vista-tabela" aria-label="Demandas">
+    <div class="tabela-wrap">
+      <table class="tabela" id="tabela">
+        <thead><tr>
+          <th scope="col">Protocolo</th><th scope="col">Abertura / Atualização</th><th scope="col">Categoria</th><th scope="col">Escopo</th>
+          <th scope="col">Prioridade</th><th scope="col">Risco</th><th scope="col">Benefício direto</th><th scope="col">Despacho institucional</th><th scope="col">Status</th>
+        </tr></thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="vista-kanban" class="kanban" aria-label="Quadro por status" hidden></section>
+
+  <p class="vazio" id="vazio" hidden>Nenhuma demanda encontrada com os filtros atuais.</p>
+</main>
+
+<div class="impressao-cab" aria-hidden="true">
+  <h1 id="imp-titulo"></h1>
+  <p id="imp-sub"></p>
+  <p id="imp-filtros"></p>
+</div>
+
+<dialog id="dlg-form" aria-labelledby="dlg-titulo">
+  <form id="form" novalidate>
+    <header class="dlg__cab">
+      <h2 id="dlg-titulo">Nova demanda</h2>
+      <button type="button" class="dlg__x" id="dlg-fechar" aria-label="Fechar">×</button>
+    </header>
+    <div class="dlg__corpo">
+      <p class="dlg__protocolo" id="dlg-protocolo" hidden></p>
+      <div class="grade2">
+        <label class="campo"><span>Categoria da demanda *</span><select id="c-categoria" required></select><small class="erro" data-erro="categoria"></small></label>
+        <label class="campo"><span>Local / PNR</span><input id="c-local_pnr" maxlength="120" placeholder="Ex.: Bloco C, apto 204" autocomplete="off"></label>
+      </div>
+      <label class="campo"><span>Descrição do escopo *</span><textarea id="c-escopo" rows="4" maxlength="2000" required placeholder="Descreva exatamente a necessidade física da instalação."></textarea><small class="erro" data-erro="escopo"></small></label>
+      <div class="grade2">
+        <label class="campo"><span>Prioridade *</span><select id="c-prioridade" required></select><small class="erro" data-erro="prioridade"></small></label>
+        <label class="campo"><span>Matriz de risco *</span><select id="c-risco" required></select><small class="erro" data-erro="risco"></small></label>
+      </div>
+      <label class="campo"><span>Benefício direto</span><textarea id="c-beneficio" rows="2" maxlength="1000" placeholder="Melhoria na qualidade de vida dos moradores do PNR."></textarea></label>
+      <label class="campo"><span>Despacho institucional</span><textarea id="c-despacho" rows="2" maxlength="1000" placeholder="Endosso, aprovação ou ordem do Presidente da Vila ou escalão superior."></textarea></label>
+      <label class="campo"><span>Status da execução *</span><select id="c-status" required></select></label>
+      <label class="campo" id="grupo-pendencia" hidden><span>Motivo da pendência *</span><input id="c-pendencia_motivo" maxlength="500" placeholder="Aguardando material, licitação…"><small class="erro" data-erro="pendencia_motivo"></small></label>
+      <div class="hist" id="hist" hidden><h3>Histórico de alterações</h3><ol id="hist-lista"></ol></div>
+      <p class="erro erro--geral" id="erro-form" role="alert"></p>
+    </div>
+    <footer class="dlg__rodape">
+      <button type="button" class="bt bt--perigo" id="bt-excluir" hidden>Excluir</button>
+      <span class="dlg__espaco"></span>
+      <button type="button" class="bt bt--sec" id="bt-cancelar">Cancelar</button>
+      <button type="submit" class="bt bt--prim" id="bt-salvar">Salvar</button>
+    </footer>
+  </form>
+</dialog>
+
+<dialog id="dlg-conf" aria-labelledby="conf-titulo">
+  <div class="dlg__corpo">
+    <h2 id="conf-titulo">Excluir demanda?</h2>
+    <p id="conf-texto"></p>
+  </div>
+  <footer class="dlg__rodape">
+    <span class="dlg__espaco"></span>
+    <button type="button" class="bt bt--sec" id="conf-nao">Voltar</button>
+    <button type="button" class="bt bt--perigo" id="conf-sim">Excluir</button>
+  </footer>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
