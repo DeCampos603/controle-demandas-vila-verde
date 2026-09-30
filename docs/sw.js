@@ -1,7 +1,7 @@
 /* Service worker: rede primeiro, cache como reserva (mesma estratégia dos outros sites do repo).
    Só guarda os arquivos do próprio site — as chamadas à planilha nunca passam pelo cache. */
-const VERSAO = "vv-demandas-v1";
-const CASCA = ["./", "./index.html", "./manifest.webmanifest", "./css/tema.css", "./js/app.js", "./js/api.js", "./js/config.js", "./assets/arvore.svg"];
+const VERSAO = "vv-demandas-v2";
+const CASCA = ["./", "./index.html", "./manifest.webmanifest", "./css/tema.css", "./js/app.js", "./js/api.js", "./js/config.js", "./assets/vila-verde.svg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSAO).then((c) => Promise.allSettled(CASCA.map((u) => c.add(u)))).then(() => self.skipWaiting()));
