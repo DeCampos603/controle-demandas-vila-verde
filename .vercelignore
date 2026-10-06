@@ -1,0 +1,7 @@
+*.gsheet
+*.xlsx
+apps-script/
+ferramentas/
+testes/
+.git
+.vercel

@@ -1,0 +1,5 @@
+{
+  "buildCommand": "echo building",
+  "outputDirectory": "docs",
+  "cleanUrls": true
+}
